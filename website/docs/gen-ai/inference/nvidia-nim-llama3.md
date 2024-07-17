@@ -30,6 +30,8 @@ NIMs are packaged as container images on a per model/model family basis. Each NI
 
 ![NIM Architecture](img/nim-architecture.png)
 
+Source: https://docs.nvidia.com/nim/large-language-models/latest/introduction.html#architecture
+
 ## Overview of this deployment pattern on Amazon EKS
 
 This pattern combines the capabilities of NVIDIA NIM, Amazon Elastic Kubernetes Service (EKS), and various AWS services to deliver a high-performance and cost-optimized model serving infrastructure.
@@ -50,11 +52,53 @@ By combining these components, our proposed solution delivers a powerful and cos
 
 ### Prerequisites
 
+Before getting started with NVIDIA NIM, ensure you have the following:
+
+<details>
+<summary>Click to expand the NVIDIA NIM account setup details</summary>
+
+**NVIDIA AI Enterprise Account**
+
+- Register for an NVIDIA AI Enterprise account. If you don't have one, you can sign up for a trial account using this [link](https://enterpriseproductregistration.nvidia.com/?LicType=EVAL&ProductFamily=NVAIEnterprise).
+
+**NGC API Key**
+
+1. Log in to your NVIDIA AI Enterprise account
+2. Navigate to the NGC (NVIDIA GPU Cloud) [portal](https://org.ngc.nvidia.com/)
+3. Generate a personal API key:
+    - Go to your account settings or navigate directly to: https://org.ngc.nvidia.com/setup/personal-keys
+    - Click on "Generate Personal Key"
+    - Ensure that at least "NGC Catalog" is selected from the "Services Included" dropdown
+    - Copy and securely store your API key, the key should have a prefix with `nvapi-`
+
+    ![NGC API KEY](./img/nim-ngc-api-key.png)
+
+**Validate NGC API Key and Test Image Pull**
+
+To ensure your API key is valid and working correctly:
+1. Set up your NGC API key as an environment variable:
+```bash
+export NGC_API_KEY=<your_api_key_here>
+```
+
+2. Authenticate Docker with the NVIDIA Container Registry:
+
+```bash
+echo "$NGC_API_KEY" | docker login nvcr.io --username '$oauthtoken' --password-stdin
+```
+
+3. Test pulling an image from NGC:
+```bash
+docker pull nvcr.io/nim/meta/llama3-8b-instruct:latest
+```
+You do not have to wait for it to complete, just to make sure the API key is valid to pull the image.
+</details>
+
+The following are required to run this tutorial
 - An active AWS account with admin equivalent permissions
 - [aws cli](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 - [kubectl](https://Kubernetes.io/docs/tasks/tools/)
-- [Terraform](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli) installed
-- NVIDIA NGC account and API key
+- [Terraform](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
 
 ### Deploy
 
@@ -89,7 +133,7 @@ This process will take approximately 20 minutes to complete.
 
 **3. Verify the Installation**
 
-Once the installation finishes, verify the Amazon EKS Cluster
+Once the installation finishes, you may find the configure_kubectl command from the output. Run the following to configure EKS cluster access
 
 ```bash
 # Creates k8s config file to authenticate with EKS
@@ -99,7 +143,7 @@ aws eks --region us-west-2 update-kubeconfig --name nvidia-triton-server
 Check the status of your pods deployed
 
 ```bash
-kubectl get po -A
+kubectl get po -n nim
 ```
 
 You should see output similar to the following:
@@ -107,45 +151,17 @@ You should see output similar to the following:
 <summary>Click to expand the deployment details</summary>
 
 ```text
-NAMESPACE               NAME                                                              READY   STATUS    RESTARTS      AGE
-ingress-nginx           ingress-nginx-controller-55474d95c5-994fc                         1/1     Running   0             29h
-karpenter               karpenter-57f7f6bc4f-c6cts                                        1/1     Running   0             29h
-karpenter               karpenter-57f7f6bc4f-cfwwt                                        1/1     Running   0             29h
-kube-prometheus-stack   kube-prometheus-stack-grafana-558586c645-hv7hm                    3/3     Running   0             29h
-kube-prometheus-stack   kube-prometheus-stack-kube-state-metrics-6669bff85f-fsmfz         1/1     Running   0             29h
-kube-prometheus-stack   kube-prometheus-stack-operator-67b968589d-k6ndp                   1/1     Running   0             29h
-kube-prometheus-stack   kube-prometheus-stack-prometheus-node-exporter-58pfp              1/1     Running   0             19h
-kube-prometheus-stack   kube-prometheus-stack-prometheus-node-exporter-95xzb              1/1     Running   0             29h
-kube-prometheus-stack   kube-prometheus-stack-prometheus-node-exporter-wtpgc              1/1     Running   0             29h
-kube-prometheus-stack   prometheus-adapter-6f4ff878bc-64ntq                               1/1     Running   0             24h
-kube-prometheus-stack   prometheus-kube-prometheus-stack-prometheus-0                     2/2     Running   0             29h
-kube-system             aws-load-balancer-controller-55cb4579f6-9bp8d                     1/1     Running   0             29h
-kube-system             aws-load-balancer-controller-55cb4579f6-n2trc                     1/1     Running   0             29h
-kube-system             aws-node-rlxwv                                                    2/2     Running   0             29h
-kube-system             aws-node-tz56x                                                    2/2     Running   0             19h
-kube-system             aws-node-v29s9                                                    2/2     Running   0             29h
-kube-system             coredns-848555ff5-kkngd                                           1/1     Running   0             29h
-kube-system             coredns-848555ff5-n6dnv                                           1/1     Running   0             29h
-kube-system             ebs-csi-controller-657544c77c-hl4z5                               6/6     Running   0             29h
-kube-system             ebs-csi-controller-657544c77c-sncv6                               6/6     Running   0             29h
-kube-system             ebs-csi-node-9xjnt                                                3/3     Running   0             19h
-kube-system             ebs-csi-node-fhphc                                                3/3     Running   0             29h
-kube-system             ebs-csi-node-hjg9v                                                3/3     Running   0             29h
-kube-system             efs-csi-controller-77c44b5fc7-pqwv9                               3/3     Running   0             25h
-kube-system             efs-csi-controller-77c44b5fc7-vxpng                               3/3     Running   0             25h
-kube-system             efs-csi-node-5k7k8                                                3/3     Running   0             25h
-kube-system             efs-csi-node-l4n5t                                                3/3     Running   0             25h
-kube-system             efs-csi-node-wxl97                                                3/3     Running   0             19h
-kube-system             kube-proxy-5qg9q                                                  1/1     Running   0             29h
-kube-system             kube-proxy-7fzdh                                                  1/1     Running   0             29h
-kube-system             kube-proxy-vm56n                                                  1/1     Running   0             19h
-nim                     nim-llm-0                                                         1/1     Running   0             15m
-nvidia-device-plugin    nvidia-device-plugin-gpu-feature-discovery-64c9v                  1/1     Running   0             19h
-nvidia-device-plugin    nvidia-device-plugin-node-feature-discovery-master-568b497ddvx9   1/1     Running   0             29h
-nvidia-device-plugin    nvidia-device-plugin-node-feature-discovery-worker-28wvj          1/1     Running   1 (29h ago)   29h
-nvidia-device-plugin    nvidia-device-plugin-node-feature-discovery-worker-5nplt          1/1     Running   0             29h
-nvidia-device-plugin    nvidia-device-plugin-node-feature-discovery-worker-hztcq          1/1     Running   0             19h
-nvidia-device-plugin    nvidia-device-plugin-vn5dn                                        1/1     Running   0             19h
+NAME            READY   STATUS    RESTARTS   AGE
+pod/nim-llm-0   1/1     Running   0          105s
+
+NAME              TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)    AGE
+service/nim-llm   ClusterIP   172.20.63.25   <none>        8000/TCP   107s
+
+NAME                       READY   AGE
+statefulset.apps/nim-llm   1/4     106s
+
+NAME                                          REFERENCE             TARGETS   MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/nim-llm   StatefulSet/nim-llm   1/5       1         5         4          107s
 ```
 </details>
 
@@ -158,47 +174,78 @@ image:
   repository: nvcr.io/nim/meta/llama3-8b-instruct
   tag: latest
 ```
+The Llama3 model is deployed with a StatefulSet in nim-llm namespace. As it is running, Karpenter provisioned a GPU
+Check the Karpenter provisioned node.
+
+```bash
+kubectl get node -l type=karpenter -L node.kubernetes.io/instance-type
+```
+
+```text
+NAME                                         STATUS   ROLES    AGE     VERSION               INSTANCE-TYPE
+ip-100-64-77-39.us-west-2.compute.internal   Ready    <none>   4m46s   v1.30.0-eks-036c24b   g5.2xlarge
+```
 
 **4. Verify the deployed model**
 
-Once all pods in `nim` namespace is ready with `1/1` status, use below command to verify it's ready to serve the traffic.
-
-```bash
-export INGRESS_URL=$(kubectl get ingress -n nim -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}')
-
-curl -X 'POST' \
-"http://$INGRESS_URL/v1/completions" \
--H 'accept: application/json' \
--H 'Content-Type: application/json' \
--d '{
-"model": "meta/llama3-8b-instruct",
-"prompt": "Once upon a time",
-"max_tokens": 64
-}'
-```
-
-you will see similar output like the following
-
-```json
-{"id":"cmpl-63a0b66aeda1440c8b6ca1ce3583b173","object":"text_completion","created":1719742336,"model":"meta/llama3-8b-instruct","choices":[{"index":0,"text":", there was a young man named Jack who lived in a small village at the foot of a vast and ancient forest. Jack was a curious and adventurous soul, always eager to explore the world beyond his village. One day, he decided to venture into the forest, hoping to discover its secrets.\nAs he wandered deeper into","logprobs":null,"finish_reason":"length","stop_reason":null}],"usage":{"prompt_tokens":5,"total_tokens":69,"completion_tokens":64}}
-```
-
-### Testing the Llama3 model deployed with NIM
-It's time to test the Llama3 just deployed. We will run the following commands with the same prompts to verify the generated outputs.
-
-First, expose the model serving service with port-forward using kubectl
+Once all pods in `nim` namespace is ready with `1/1` status, use below command to verify it's ready to serve the traffic. To verify, expose the model serving service with port-forward using kubectl.
 
 ```bash
 kubectl port-forward -n nim svc/nim-llm 8000
 ```
 
-Next, open another Terminal window, run the client using the existing prompts:
+Then you can invoke the deployed model with a simple HTTP request with curl command.
+
+```bash
+curl -X 'POST' \
+  "http://localhost:8000/v1/completions" \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+      "model": "meta/llama3-8b-instruct",
+      "prompt": "Once upon a time",
+      "max_tokens": 64
+      }'
+```
+
+you will see similar output like the following
+
+```json
+{
+  "id": "cmpl-63a0b66aeda1440c8b6ca1ce3583b173",
+  "object": "text_completion",
+  "created": 1719742336,
+  "model": "meta/llama3-8b-instruct",
+  "choices": [
+    {
+      "index": 0,
+      "text": ", there was a young man named Jack who lived in a small village at the foot of a vast and ancient forest. Jack was a curious and adventurous soul, always eager to explore the world beyond his village. One day, he decided to venture into the forest, hoping to discover its secrets.\nAs he wandered deeper into",
+      "logprobs": null,
+      "finish_reason": "length",
+      "stop_reason": null
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 5,
+    "total_tokens": 69,
+    "completion_tokens": 64
+  }
+}
+```
+
+### Testing the Llama3 model deployed with NIM
+It's time to test the Llama3 just deployed. First setup a simple environment for the testing.
 
 ```bash
 cd gen-ai/inference/nvidia-nim/nim-client
 python3 -m venv .venv
 source .venv/bin/activate
 pip install openai
+```
+
+We have prepared some prompts in prompts.txt , it contains 20 prompts. You can run following commands with the prompts to verify the generated outputs.
+
+```bash
 python3 client.py --input-prompts prompts.txt --results-file results.txt
 ```
 
@@ -278,11 +325,14 @@ kubectl apply -f genaiperf-deploy.yaml
 ```
 
 Once the pod is ready with running status `1/1`, can execute into the pod.
+
 ```bash
 export POD_NAME=$(kubectl get po -l app=tritonserver -ojsonpath='{.items[0].metadata.name}')
 kubectl exec -it $POD_NAME -- bash
 ```
+
 Run the testing to the deployed NIM Llama3 model
+
 ```bash
 genai-perf \
   -m meta/llama3-8b-instruct \
@@ -301,6 +351,7 @@ genai-perf \
   --profile-export-file my_profile_export.json \
   --url nim-llm.nim:8000
 ```
+
 You should see similar output like the following
 
 ```bash
@@ -321,20 +372,19 @@ You should be able to see the [metrics](https://docs.nvidia.com/deeplearning/tri
 
 To understand the command line options, please refer to [this documentation](https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/client/src/c%2B%2B/perf_analyzer/genai-perf/README.html#command-line-options).
 
-
 ## Observability
+
 As part of this blueprint, we have also deployed the Kube Prometheus stack, which provides Prometheus server and Grafana deployments for monitoring and observability.
 
 First, let's verify the services deployed by the Kube Prometheus stack:
 
 ```bash
-kubectl get svc -n kube-prometheus-stack
+kubectl get svc -n monitoring
 ```
 
 You should see output similar to this:
 
 ```text
-kubectl get svc -n kube-prometheus-stack
 NAME                                             TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)             AGE
 kube-prometheus-stack-grafana                    ClusterIP   172.20.225.77    <none>        80/TCP              10m
 kube-prometheus-stack-kube-state-metrics         ClusterIP   172.20.237.248   <none>        8080/TCP            10m
@@ -353,7 +403,9 @@ kubectl port-forward -n nim svc/nim-llm 8000
 curl localhost:8000/metrics # run this in another terminal
 ```
 
-We also provided a pre-configured Grafana dashboard. In the Grafana dashboard below, it contains several important metrics:
+### Grafana Dashboard
+
+We provides a pre-configured Grafana dashboard to better visualize NIM status. In the Grafana dashboard below, it contains several important metrics:
 
 - **Time to First Token (TTFT)**: The latency between the initial inference request to the model and the return of the first token.
 - **Inter-Token Latency (ITL)**: The latency between each token after the first.
@@ -363,34 +415,50 @@ You can find more metrics description from this [document](https://docs.nvidia.c
 
 ![NVIDIA LLM Server](img/nim-dashboard.png)
 
-You can visualize these metrics using the Grafana. To view the Grafana dashboard to monitor these metrics, follow the steps below:
+To view the Grafana dashboard to monitor these metrics, follow the steps below:
+
+<details>
+<summary>Click to expand details</summary>
+
+**1. Retrieve the Grafana password.**
+
+The password is saved in the AWS Secret Manager. Below Terraform command will show you the secret name.
 
 ```bash
-- Port-forward Grafana service:
-kubectl port-forward svc/kube-prometheus-stack-grafana 3000:80 -n kube-prometheus-stack
-
-- Grafana Admin user
-admin
-
-- Get secret name from Terraform output
 terraform output grafana_secret_name
+```
 
-- Get admin user password
+Then use the output secret name to run below command,
+
+```bash
 aws secretsmanager get-secret-value --secret-id <grafana_secret_name_output> --region $AWS_REGION --query "SecretString" --output text
 ```
 
-**Login to Grafana:**
+**2. Expose the Grafana Service**
+
+Use port-forward to expose the Grafana service.
+
+```bash
+kubectl port-forward svc/kube-prometheus-stack-grafana 3000:80 -n monitoring
+```
+
+**3. Login to Grafana:**
 
 - Open your web browser and navigate to [http://localhost:3000](http://localhost:3000).
 - Login with the username `admin` and the password retrieved from AWS Secrets Manager.
 
-**Open the NIM Monitoring Dashboard:**
+**4. Open the NIM Monitoring Dashboard:**
 
 - Once logged in, click "Dashboards" on the left sidebar and search "nim"
 - You can find the Dashboard `NVIDIA NIM Monitoring` from the list
 - Click and entering to the dashboard.
 
 You should now see the metrics displayed on the Grafana dashboard, allowing you to monitor the performance your NVIDIA NIM service deployment.
+</details>
+
+:::info
+As of writing this guide, NVIDIA also provides an example Grafana dashboard. You can check it from [here](https://docs.nvidia.com/nim/large-language-models/latest/observability.html#grafana).
+:::
 
 ## Cleanup
 
