@@ -428,11 +428,11 @@ env:
 
 These environment variables are crucial for enabling the embedding of Grafana panels within the Ray Dashboard and for proper communication between Ray, Grafana, and Prometheus:
 
- - **RAY_GRAFANA_IFRAME_HOST** is used by your browser to fetch Grafana panels. It's set to localhost:3000, which is typically used when accessing Grafana through port forwarding.
+ - **RAY_GRAFANA_IFRAME_HOST** is used by your browser to fetch Grafana panels. It's set to 127.0.0.1:3000, which is typically used when accessing Grafana through port forwarding.
  - **RAY_GRAFANA_HOST** defines the internal Kubernetes service URL for Grafana. The Ray head pod uses this for backend health checks and communication within the cluster.
  - **RAY_PROMETHEUS_HOST** specifies the internal Kubernetes service URL for Prometheus, allowing Ray to query metrics when needed.
 
-These variables ensure seamless integration between Ray and the monitoring stack. They enable the Ray Dashboard to display Grafana panels and allow Ray components to communicate with Grafana and Prometheus services within the Kubernetes cluster. The specific service names used reflect the resources deployed by the Kube Prometheus Stack, ensuring proper connectivity.
+`Note:`Since we forward the port of Grafana to 127.0.0.1:3000 in this example, we set RAY_GRAFANA_IFRAME_HOST to http://127.0.0.1:3000. See [Configuring and Managing Ray Dashboard](https://docs.ray.io/en/latest/cluster/configure-manage-dashboard.html) for more details about these environment variables.
 
 **Access Prometheus Web UI**
 
@@ -449,7 +449,7 @@ kubectl port-forward prometheus-kube-prometheus-stack-prometheus-0 -n kube-prome
 **Access Grafana**
 
 ```bash
-- `Port-forward Grafana service:`
+- Port-forward Grafana service:
 
 kubectl port-forward deployment/kube-prometheus-stack-grafana -n kube-prometheus-stack 3000:3000
 
@@ -472,14 +472,14 @@ aws secretsmanager get-secret-value --secret-id <grafana_secret_name_output> --r
 - Create new dashboard by importing JSON file via Dashboards menu.
 - Click 'Dashboards' icon in left panel, 'New', 'Import', then 'Upload JSON file'.
 - Choose a JSON file.
-   - `Case 1:` If you are using Ray 2.24.0, you can use the sample config files in [GitHub repository](https://github.com/awslabs/data-on-eks/tree/main/gen-ai/inference/vllm-rayserve-gpu/monitoring/ray-dashboards). The file names have a pattern of xxx_grafana_dashboard.json.
+   - `Case 1:` If you are using Ray 2.24.0, you can use the sample config files in [GitHub repository](https://github.com/shivam-dubey-1/data-on-eks/tree/rayserve-vllm-o11y/gen-ai/inference/vllm-rayserve-gpu/monitoring/ray-dashboards). The file names have a pattern of xxx_grafana_dashboard.json.
    - `Case 2:` Otherwise, you should import the JSON files from /tmp/ray/session_latest/metrics/grafana/dashboards/ in the head Pod. You can use kubectl cp to copy the files from the head Pod to your local machine.
 - Click “Import”.
 ```text
 TODO: Note that importing the dashboard manually is not ideal. We should find a way to import the dashboard automatically.
 ```
 ![RayServe Grafana](img/ray-grafana-dashboard.png)
-
+-------------------------
 ## Conclusion
 Integrating Ray Serve with a vLLM backend offers numerous benefits for large language model (LLM) inference, particularly in terms of efficiency, scalability, and cost-effectiveness. Ray Serve's ability to handle concurrent requests and dynamically batch them ensures optimal GPU utilization, which is crucial for high-throughput LLM applications. The integration with vLLM enhances this further by enabling continuous batching, which significantly improves throughput and reduces latency compared to static batching. Overall, the combination of Ray Serve and vLLM provides a robust, scalable, and cost-efficient solution for deploying LLMs in production.
 
@@ -493,6 +493,10 @@ Delete the RayCluster
 cd data-on-eks/gen-ai/inference/vllm-rayserve-gpu
 
 kubectl delete -f ray-service-vllm.yaml
+```
+```bash
+cd data-on-eks/gen-ai/inference/vllm-rayserve-gpu/monitoring
+
 kubectl delete -f serviceMonitor.yaml
 kubectl delete -f podMonitor.yaml
 ```
