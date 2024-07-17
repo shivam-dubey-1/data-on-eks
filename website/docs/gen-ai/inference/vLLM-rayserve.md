@@ -475,7 +475,7 @@ aws secretsmanager get-secret-value --secret-id <grafana_secret_name_output> --r
 - Click 'Dashboards' icon in left panel, 'New', 'Import', then 'Upload JSON file'.
 - Choose a JSON file.
    - `Case 1:` If you are using Ray 2.24.0, you can use the sample config files in [GitHub repository](https://github.com/shivam-dubey-1/data-on-eks/tree/rayserve-vllm-o11y/gen-ai/inference/vllm-rayserve-gpu/monitoring/ray-dashboards). The file names have a pattern of xxx_grafana_dashboard.json.
-   - `Case 2:` Otherwise, you should import the JSON files from /tmp/ray/session_latest/metrics/grafana/dashboards/ in the head Pod. You can use kubectl cp to copy the files from the head Pod to your local machine.
+   - `Case 2:` Otherwise, you should import the JSON files from `/tmp/ray/session_latest/metrics/grafana/dashboards/` in the head Pod. You can use `kubectl cp` to copy the files from the head Pod to your local machine.
 - Click “Import”.
 ```text
 TODO: Note that importing the dashboard manually is not ideal. We should find a way to import the dashboard automatically.
