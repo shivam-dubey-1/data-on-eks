@@ -398,14 +398,14 @@ kube-prometheus-stack-prometheus-node-exporter   ClusterIP   172.20.171.165   <n
 prometheus-operated                              ClusterIP   None             <none>        9090/TCP            11d
 ```
 
-After verifying the Kube Prometheus stack services, we need to configure Prometheus to monitor our Ray cluster comprehensively. 
+After verifying the Kube Prometheus stack services, we need to configure Prometheus to monitor our Ray cluster comprehensively.
 This requires deploying both ServiceMonitor and PodMonitor resources:
 
  - **ServiceMonitor** is used to collect metrics from the Ray head node, which has a Kubernetes Service exposing its metrics endpoint.
  - **PodMonitor** is necessary because KubeRay operator does not create a Kubernetes service for the Ray worker Pods. Therefore, we cannot use a ServiceMonitor to scrape metrics from worker Pods and must use PodMonitors CRD instead.
- 
+
 ```bash
-cd data-on-eks/gen-ai/inference/vllm-rayserve-gpu/monitoring
+cd data-on-eks/ai-ml/jark-stack/terraform/monitoring
 ```
 ```bash
 kubectl apply -f serviceMonitor.yaml
@@ -434,7 +434,7 @@ These environment variables are crucial for enabling the embedding of Grafana pa
 
 See [Configuring and Managing Ray Dashboard](https://docs.ray.io/en/latest/cluster/configure-manage-dashboard.html) for more details about these environment variables.
 ```text
-Note: Since we forward the port of Grafana to 127.0.0.1:3000 in this example, we set RAY_GRAFANA_IFRAME_HOST to http://127.0.0.1:3000. 
+Note: Since we forward the port of Grafana to 127.0.0.1:3000 in this example, we set RAY_GRAFANA_IFRAME_HOST to http://127.0.0.1:3000.
 ```
 **Access Prometheus Web UI**
 
@@ -442,7 +442,7 @@ Note: Since we forward the port of Grafana to 127.0.0.1:3000 in this example, we
 # Forward the port of Prometheus Web UI in the Prometheus server Pod.
 kubectl port-forward prometheus-kube-prometheus-stack-prometheus-0 -n kube-prometheus-stack 9090:9090
 ```
- - Go to ${YOUR_IP}:9090/targets (e.g. 127.0.0.1:9090/targets). You should be able to see:
+ - Go to (YOUR_IP):9090/targets (e.g. 127.0.0.1:9090/targets). You should be able to see:
    - podMonitor/kube-prometheus-stack/ray-workers-monitor/0 (1/1 up)
    - serviceMonitor/kube-prometheus-stack/ray-head-monitor/0 (2/2 up)
 
@@ -474,7 +474,7 @@ aws secretsmanager get-secret-value --secret-id <grafana_secret_name_output> --r
 - Create new dashboard by importing JSON file via Dashboards menu.
 - Click 'Dashboards' icon in left panel, 'New', 'Import', then 'Upload JSON file'.
 - Choose a JSON file.
-   - `Case 1:` If you are using Ray 2.24.0, you can use the sample config files in [GitHub repository](https://github.com/shivam-dubey-1/data-on-eks/tree/main/gen-ai/inference/vllm-rayserve-gpu/monitoring/ray-dashboards). The file names have a pattern of xxx_grafana_dashboard.json.
+   - `Case 1:` If you are using Ray 2.24.0, you can use the sample config files in [GitHub repository](https://github.com/shivam-dubey-1/data-on-eks/tree/main/ai-ml/jark-stack/terraform/monitoring/ray-dashboards). The file names have a pattern of xxx_grafana_dashboard.json.
    - `Case 2:` Otherwise, you should import the JSON files from `/tmp/ray/session_latest/metrics/grafana/dashboards/` in the head Pod. You can use `kubectl cp` to copy the files from the head Pod to your local machine.
 - Click “Import”.
 ```text
@@ -504,7 +504,7 @@ cd data-on-eks/gen-ai/inference/vllm-rayserve-gpu
 kubectl delete -f ray-service-vllm.yaml
 ```
 ```bash
-cd data-on-eks/gen-ai/inference/vllm-rayserve-gpu/monitoring
+cd data-on-eks/ai-ml/jark-stack/terraform/monitoring
 
 kubectl delete -f serviceMonitor.yaml
 kubectl delete -f podMonitor.yaml

@@ -139,7 +139,7 @@ module "eks_blueprints_addons" {
     repository = "https://argoproj.github.io/argo-helm"
     values     = [templatefile("${path.module}/helm-values/argo-events-values.yaml", {})]
   }
-  
+
   #---------------------------------------
   # Prommetheus and Grafana stack
   #---------------------------------------
