@@ -453,7 +453,7 @@ kubectl port-forward prometheus-kube-prometheus-stack-prometheus-0 -n kube-prome
 kubectl port-forward deployment/kube-prometheus-stack-grafana -n kube-prometheus-stack 3000:3000
 
 # Note: You need to update `RAY_GRAFANA_IFRAME_HOST` if you expose Grafana to a different port.
-# Check ${YOUR_IP}:3000/login for the Grafana login page (e.g. 127.0.0.1:3000/login).
+# Check (YOUR_IP):3000/login for the Grafana login page (e.g. 127.0.0.1:3000/login).
 
 - Grafana Admin user
 admin
