@@ -439,6 +439,7 @@ resource "aws_secretsmanager_secret" "grafana" {
 resource "aws_secretsmanager_secret_version" "grafana" {
   secret_id     = aws_secretsmanager_secret.grafana.id
   secret_string = random_password.grafana.result
+}
 
 data "aws_iam_policy_document" "karpenter_controller_policy" {
   statement {
