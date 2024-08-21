@@ -418,8 +418,6 @@ To integrate Grafana and Prometheus with the Ray Dashboard, we set specific envi
 
 ```text
 env:
-  - name: RAY_GRAFANA_IFRAME_HOST
-    value: http://127.0.0.1:3000
   - name: RAY_GRAFANA_HOST
     value: http://kube-prometheus-stack-grafana.kube-prometheus-stack.svc:80
   - name: RAY_PROMETHEUS_HOST
@@ -428,7 +426,6 @@ env:
 
 These environment variables are crucial for enabling the embedding of Grafana panels within the Ray Dashboard and for proper communication between Ray, Grafana, and Prometheus:
 
- - **RAY_GRAFANA_IFRAME_HOST** is used by your browser to fetch Grafana panels. It's set to 127.0.0.1:3000, which is typically used when accessing Grafana through port forwarding.
  - **RAY_GRAFANA_HOST** defines the internal Kubernetes service URL for Grafana. The Ray head pod uses this for backend health checks and communication within the cluster.
  - **RAY_PROMETHEUS_HOST** specifies the internal Kubernetes service URL for Prometheus, allowing Ray to query metrics when needed.
 
@@ -488,7 +485,7 @@ In the Grafana dashboard below, you can see several metrics:
 - **Active Actors by Name** presents the current number of (live) actors with a particular name.
 
 ![RayServe Grafana](img/ray-grafana-dashboard.png)
--------------------------
+
 ## Conclusion
 Integrating Ray Serve with a vLLM backend offers numerous benefits for large language model (LLM) inference, particularly in terms of efficiency, scalability, and cost-effectiveness. Ray Serve's ability to handle concurrent requests and dynamically batch them ensures optimal GPU utilization, which is crucial for high-throughput LLM applications. The integration with vLLM enhances this further by enabling continuous batching, which significantly improves throughput and reduces latency compared to static batching. Overall, the combination of Ray Serve and vLLM provides a robust, scalable, and cost-efficient solution for deploying LLMs in production.
 
