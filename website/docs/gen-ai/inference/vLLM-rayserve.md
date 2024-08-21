@@ -429,8 +429,6 @@ These environment variables are crucial for enabling the embedding of Grafana pa
  - **RAY_GRAFANA_HOST** defines the internal Kubernetes service URL for Grafana. The Ray head pod uses this for backend health checks and communication within the cluster.
  - **RAY_PROMETHEUS_HOST** specifies the internal Kubernetes service URL for Prometheus, allowing Ray to query metrics when needed.
 
-See [Configuring and Managing Ray Dashboard](https://docs.ray.io/en/latest/cluster/configure-manage-dashboard.html) for more details about these environment variables.
-
 **Access Prometheus Web UI**
 
 ```bash
