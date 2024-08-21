@@ -430,9 +430,7 @@ These environment variables are crucial for enabling the embedding of Grafana pa
  - **RAY_PROMETHEUS_HOST** specifies the internal Kubernetes service URL for Prometheus, allowing Ray to query metrics when needed.
 
 See [Configuring and Managing Ray Dashboard](https://docs.ray.io/en/latest/cluster/configure-manage-dashboard.html) for more details about these environment variables.
-```text
-Note: Since we forward the port of Grafana to 127.0.0.1:3000 in this example, we set RAY_GRAFANA_IFRAME_HOST to http://127.0.0.1:3000.
-```
+
 **Access Prometheus Web UI**
 
 ```bash
@@ -452,7 +450,6 @@ kubectl port-forward prometheus-kube-prometheus-stack-prometheus-0 -n kube-prome
 
 kubectl port-forward deployment/kube-prometheus-stack-grafana -n kube-prometheus-stack 3000:3000
 
-# Note: You need to update `RAY_GRAFANA_IFRAME_HOST` if you expose Grafana to a different port.
 # Check (YOUR_IP):3000/login for the Grafana login page (e.g. 127.0.0.1:3000/login).
 
 - Grafana Admin user
