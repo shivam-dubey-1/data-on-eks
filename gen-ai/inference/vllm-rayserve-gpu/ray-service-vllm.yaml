@@ -102,8 +102,6 @@ spec:
                 secretKeyRef:
                   name: hf-token
                   key: hf-token
-            - name: RAY_GRAFANA_IFRAME_HOST
-              value: http://127.0.0.1:3000
             - name: RAY_GRAFANA_HOST
               value: http://kube-prometheus-stack-grafana.kube-prometheus-stack.svc:80
             - name: RAY_PROMETHEUS_HOST
